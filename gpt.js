@@ -14,18 +14,25 @@ const initialPrompt = await fs.readFile(
   { encoding: 'utf8' },
 );
 
-export async function ask(question, model = 'gpt-4') {
-  const data = {
-    model,
-    stop: 'END_OF_MESSAGE',
-    messages: [{ role: 'system', content: `${initialPrompt}\n${question}` }],
-  };
+export async function ask(question, model = 'gpt-4', conversation = null) {
+  if (!conversation) {
+    conversation = [{ role: 'system', content: initialPrompt }];
+  }
+  conversation.push({
+    role: 'user',
+    content: question,
+  });
 
   try {
+    const data = {
+      model,
+      stop: 'END_OF_MESSAGE',
+      messages: conversation,
+    };
     const res = await axios.post(apiUrl, data, { headers: apiHeaders });
 
     const msg = res.data.choices[0].message.content;
-    if (!msg) {
+    if (msg === null || msg === undefined) {
       throw new Error(
         `Expected response from OpenAI, but got null message instead: ${JSON.stringify(
           res.data.choices[0],
@@ -34,7 +41,16 @@ export async function ask(question, model = 'gpt-4') {
         )}`,
       );
     }
-    return msg;
+
+    conversation.push({
+      role: 'assistant',
+      content: msg,
+    });
+
+    return {
+      msg,
+      conversation,
+    };
   } catch (err) {
     if (err instanceof AxiosError) {
       const data = err.response?.data ?? {};
@@ -44,7 +60,7 @@ export async function ask(question, model = 'gpt-4') {
       );
     }
 
-    throw new Error(`Internal error posting to ${apiUrl}: ${err.message}`, {
+    throw new Error(`Internal error posting to ${apiUrl}`, {
       cause: err,
     });
   }

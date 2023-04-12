@@ -80,10 +80,10 @@ Unix-friendly for use within bash pipelines.`,
 
       let conversation;
       if (options.continue) {
-        const latestFile = await fs.readFile(latestFile, { encoding: 'utf-8' });
-        if (latestFile) {
+        const data = await fs.readFile(latestFile, { encoding: 'utf-8' });
+        if (data) {
           try {
-            conversation = JSON.parse(latestFile);
+            conversation = JSON.parse(data);
           } catch (err) {
             throw new Error(
               `Expected file "${latestFile}" to contain a JSON-encoded conversation with GPT.`,
@@ -97,9 +97,18 @@ Unix-friendly for use within bash pipelines.`,
         options.prompt = await openEditor();
       }
 
-      console.log(await ask(options.prompt, options.model, conversation));
+      console.log('pre', conversation);
+      const data = await ask(options.prompt, options.model, conversation);
+      console.log(data.msg);
+      console.log('post', data.conversation);
+
+      await fs.writeFile(
+        latestFile,
+        JSON.stringify(data.conversation, null, 2),
+        { encoding: 'utf-8' },
+      );
     } catch (err) {
-      console.error(err.message);
+      console.error(err);
       process.exit(1);
     }
   });
