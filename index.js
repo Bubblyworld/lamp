@@ -80,12 +80,14 @@ cli
   .usage(
     `[...flags]
 
-Query GPT models from the safety of your terminal. Unix-friendly for use within bash pipelines.`,
+Query GPT models from the safety of your terminal. Unix-friendly for use
+within bash pipelines. Supports continuous conversation, like the OpenAI
+interface, but with the benefit of being able to switch model at will.`,
   )
   .option('-m, --model <model>', 'Which GPT model to use', {
     default: 'gpt-3.5-turbo',
   })
-  .option('-p, --prompt <prompt>', 'The prompt to send GPT')
+  .option('-p, --prompt <prompt>', 'The prompt to give to the GPT model')
   .option('-c, --continue', 'Continue from the last message')
   .action(async options => {
     try {
