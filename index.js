@@ -6,6 +6,7 @@ import os from 'os';
 import path from 'path';
 import { ask } from './gpt.js';
 import pico from 'picocolors';
+import { fileURLToPath } from 'url';
 
 const dataDir = path.join(os.homedir(), '.h-data');
 const latestFile = path.join(dataDir, 'latest.json');
@@ -42,7 +43,7 @@ async function init() {
 const cli = cac(pico.red(pico.bold('h')));
 
 cli
-  .version('1.0.0')
+  .version(await version())
   .help(sections => {
     return sections
       .filter(section => section.title !== 'Commands')
@@ -116,7 +117,7 @@ cli.parse();
 async function openEditor() {
   return new Promise((resolve, reject) => {
     const editor = process.env.EDITOR || 'vi';
-    const tmpFile = getTempFilePath('');
+    const tmpFile = getTempFilePath('tmp');
 
     fs.writeFile(tmpFile, defaultPrompt).then(() => {
       const child = spawn(editor, [tmpFile], {
@@ -128,13 +129,14 @@ async function openEditor() {
           if (code === 0) {
             const prompt = await fs.readFile(tmpFile, 'utf-8');
             if (prompt === defaultPrompt) {
-              reject(new Error('Stopping as the default prompt was not changed.'));
+              reject(
+                new Error('Stopping as the default prompt was not changed.'),
+              );
             }
 
             const newPath = getTempFilePath(prompt);
             await fs.rename(tmpFile, newPath);
 
-            console.log(`Saving prompt to: ${newPath}`);
             resolve(prompt);
           } else {
             reject(new Error(`Editor exited with code: ${code}`));
@@ -160,4 +162,11 @@ function getTempFilePath(prompt) {
     .join('-');
 
   return path.join(dataDir, `prompt_${timestamp}_${words}.txt`);
+}
+
+async function version() {
+  const pjson = await fs.readFile(
+    fileURLToPath(new URL('./package.json', import.meta.url)),
+  );
+  return JSON.parse(pjson).version;
 }
