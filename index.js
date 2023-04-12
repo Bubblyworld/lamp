@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { ask } from './gpt.js';
+import pico from 'picocolors';
 
 const dataDir = path.join(os.homedir(), '.h-data');
 const latestFile = path.join(dataDir, 'latest.json');
@@ -37,14 +38,34 @@ async function init() {
   }
 }
 
-const cli = cac('h');
+const cli = cac(pico.red(pico.bold('h')));
 
 cli
-  .command('', 'Query GPT from the terminal')
+  .version('1.0.0')
+  .help(sections => {
+    return sections
+      .filter(section => section.title !== 'Commands')
+      .filter(
+        section => !(section.title && section.title.startsWith('For more')),
+      )
+      .map(section => {
+        if (section.title) {
+          section.title = pico.bold(section.title);
+        }
+        return section;
+      });
+  })
+  .command('')
+  .usage(
+    `[...flags]
+
+Query GPT models from the safety of your terminal.
+Unix-friendly for use within bash pipelines.`,
+  )
   .option('-m, --model <model>', 'Which GPT model to use', {
     default: 'gpt-3.5-turbo',
   })
-  .option('-p, --prompt [prompt]', 'The prompt to send GPT')
+  .option('-p, --prompt <prompt>', 'The prompt to send GPT')
   .option('-c, --continue', 'Continue from the last conversation')
   .action(async options => {
     try {
@@ -83,7 +104,6 @@ cli
     }
   });
 
-cli.help();
 cli.parse();
 
 async function openEditor() {
