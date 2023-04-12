@@ -60,7 +60,7 @@ async function init() {
   }
 }
 
-const cli = cac(pico.red(pico.bold('h')));
+const cli = cac(pico.green(pico.bold('lamp')));
 
 cli
   .version(await version())
@@ -80,6 +80,10 @@ cli
   .command('')
   .usage(
     `[...flags]
+
+${pico.green(pico.bold('La'))}nguage ${pico.green(
+      pico.bold('M'),
+    )}odel ${pico.green(pico.bold('P'))}rompter.
 
 Query GPT models from the safety of your terminal. Unix-friendly for use
 within bash pipelines. Supports continuous conversation, like the OpenAI

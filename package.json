@@ -1,6 +1,6 @@
 {
-  "name": "h",
-  "version": "1.0.0-alpha",
+  "name": "lamp",
+  "version": "1.0.0",
   "type": "module",
   "main": "index.js",
   "exports": {
