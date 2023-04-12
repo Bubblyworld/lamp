@@ -9,6 +9,7 @@ import pico from 'picocolors';
 
 const dataDir = path.join(os.homedir(), '.h-data');
 const latestFile = path.join(dataDir, 'latest.json');
+const defaultPrompt = 'Replace this file with your prompt.';
 const validModels = [
   'gpt-4',
   'gpt-4-0314',
@@ -59,14 +60,13 @@ cli
   .usage(
     `[...flags]
 
-Query GPT models from the safety of your terminal.
-Unix-friendly for use within bash pipelines.`,
+Query GPT models from the safety of your terminal. Unix-friendly for use within bash pipelines.`,
   )
   .option('-m, --model <model>', 'Which GPT model to use', {
     default: 'gpt-3.5-turbo',
   })
   .option('-p, --prompt <prompt>', 'The prompt to send GPT')
-  .option('-c, --continue', 'Continue from the last conversation')
+  .option('-c, --continue', 'Continue from the last message')
   .action(async options => {
     try {
       if (!validModels.includes(options.model)) {
@@ -97,10 +97,8 @@ Unix-friendly for use within bash pipelines.`,
         options.prompt = await openEditor();
       }
 
-      console.log('pre', conversation);
       const data = await ask(options.prompt, options.model, conversation);
       console.log(data.msg);
-      console.log('post', data.conversation);
 
       await fs.writeFile(
         latestFile,
@@ -120,7 +118,7 @@ async function openEditor() {
     const editor = process.env.EDITOR || 'vi';
     const tmpFile = getTempFilePath('');
 
-    fs.writeFile(tmpFile, 'Replace this file with your prompt.').then(() => {
+    fs.writeFile(tmpFile, defaultPrompt).then(() => {
       const child = spawn(editor, [tmpFile], {
         stdio: 'inherit',
       });
@@ -129,6 +127,10 @@ async function openEditor() {
         (async () => {
           if (code === 0) {
             const prompt = await fs.readFile(tmpFile, 'utf-8');
+            if (prompt === defaultPrompt) {
+              reject(new Error('Stopping as the default prompt was not changed.'));
+            }
+
             const newPath = getTempFilePath(prompt);
             await fs.rename(tmpFile, newPath);
 
