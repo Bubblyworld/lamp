@@ -4,12 +4,13 @@ import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
-import { ask } from './gpt.js';
 import pico from 'picocolors';
 import { fileURLToPath } from 'url';
+import { ask } from './gpt.js';
 
 const dataDir = path.join(os.homedir(), '.h-data');
 const latestFile = path.join(dataDir, 'latest.json');
+const credsFile = path.join(dataDir, 'creds.txt');
 const defaultPrompt = 'Replace this file with your prompt.';
 const validModels = [
   'gpt-4',
@@ -20,23 +21,41 @@ const validModels = [
   'gpt-3.5-turbo-0301',
 ];
 
+let apiKey = process.env.OPENAI_API_KEY;
+
 async function init() {
   try {
     await fs.mkdir(dataDir);
   } catch (err) {
-    if (err.code === 'EEXIST') {
-      return; // great
+    if (err.code !== 'EEXIST') {
+      throw err;
     }
-    throw err;
   }
 
   try {
     await fs.readFile(latestFile);
   } catch (err) {
     if (err.code === 'ENOENT') {
-      await fs.writeFile(latestFile, '');
+      await fs.writeFile(latestFile, ''); // touch it
     }
     throw err;
+  }
+
+  if (!apiKey) {
+    try {
+      apiKey = (await fs.readFile(credsFile, { encoding: 'utf-8' })).trim();
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        throw err;
+      }
+    }
+
+    if (!apiKey) {
+      console.error(
+        `Unable to find a configured OpenAI API key. Either provide an API key via the OPENAI_API_KEY environment variable, or paste it into the credentials file '${credsFile}'.`,
+      );
+      process.exit(1);
+    }
   }
 }
 
@@ -98,7 +117,12 @@ Query GPT models from the safety of your terminal. Unix-friendly for use within 
         options.prompt = await openEditor();
       }
 
-      const data = await ask(options.prompt, options.model, conversation);
+      const data = await ask(
+        options.prompt,
+        apiKey,
+        options.model,
+        conversation,
+      );
       console.log(data.msg);
 
       await fs.writeFile(

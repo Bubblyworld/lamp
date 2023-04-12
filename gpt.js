@@ -2,19 +2,19 @@ import axios, { AxiosError } from 'axios';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 
-const apiKey = process.env.OPENAI_API_KEY;
 const apiUrl = 'https://api.openai.com/v1/chat/completions';
-const apiHeaders = {
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${apiKey}`,
-};
 
 const initialPrompt = await fs.readFile(
   fileURLToPath(new URL('./prompt.md', import.meta.url)),
   { encoding: 'utf8' },
 );
 
-export async function ask(question, model = 'gpt-4', conversation = null) {
+export async function ask(
+  question,
+  apiKey,
+  model = 'gpt-4',
+  conversation = null,
+) {
   if (!conversation) {
     conversation = [{ role: 'system', content: initialPrompt }];
   }
@@ -28,6 +28,10 @@ export async function ask(question, model = 'gpt-4', conversation = null) {
       model,
       stop: 'END_OF_MESSAGE',
       messages: conversation,
+    };
+    const apiHeaders = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
     };
     const res = await axios.post(apiUrl, data, { headers: apiHeaders });
 
