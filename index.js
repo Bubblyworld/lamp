@@ -7,6 +7,7 @@ import path from 'path';
 import pico from 'picocolors';
 import { fileURLToPath } from 'url';
 import { ask } from './gpt.js';
+import readline from 'readline';
 
 const dataDir = path.join(os.homedir(), '.h-data');
 const latestFile = path.join(dataDir, 'latest.json');
@@ -82,12 +83,16 @@ cli
 
 Query GPT models from the safety of your terminal. Unix-friendly for use
 within bash pipelines. Supports continuous conversation, like the OpenAI
-interface, but with the benefit of being able to switch model at will.`,
+interface, but with the benefit of being able to switch model at will.
+
+Input will be taken from stdin by default, unless the '-p' or '-e' flags
+are given. The model's response will be written to stdout.`,
   )
   .option('-m, --model <model>', 'Which GPT model to use', {
     default: 'gpt-3.5-turbo',
   })
-  .option('-p, --prompt <prompt>', 'The prompt to give to the GPT model')
+  .option('-p, --prompt <prompt>', 'Pass a prompt to the GPT model')
+  .option('-e, --edit', 'Edit a prompt for the GPT model')
   .option('-c, --continue', 'Continue from the last message')
   .action(async options => {
     try {
@@ -116,7 +121,17 @@ interface, but with the benefit of being able to switch model at will.`,
       }
 
       if (!options.prompt) {
-        options.prompt = await openEditor();
+        if (options.edit) {
+          options.prompt = await openEditor();
+        } else {
+          let lines = [];
+          await new Promise(resolve => {
+            const input = readline.createInterface(process.stdin);
+            input.on('line', line => lines.push(line));
+            input.on('close', () => resolve(lines));
+          });
+          options.prompt = lines.join('\n');
+        }
       }
 
       const data = await ask(
@@ -125,7 +140,7 @@ interface, but with the benefit of being able to switch model at will.`,
         options.model,
         conversation,
       );
-      console.log(data.msg);
+      console.log(data.msg.trim());
 
       await fs.writeFile(
         latestFile,
