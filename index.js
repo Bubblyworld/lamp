@@ -4,10 +4,18 @@ import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
-import ask from './gpt.js';
+import { ask } from './gpt.js';
 
 const dataDir = path.join(os.homedir(), '.h-data');
-const latestDir = path.join(dataDir, 'latest.json');
+const latestFile = path.join(dataDir, 'latest.json');
+const validModels = [
+  'gpt-4',
+  'gpt-4-0314',
+  'gpt-4-32k',
+  'gpt-4-32k-0314',
+  'gpt-3.5-turbo',
+  'gpt-3.5-turbo-0301',
+];
 
 async function init() {
   try {
@@ -16,7 +24,15 @@ async function init() {
     if (err.code === 'EEXIST') {
       return; // great
     }
+    throw err;
+  }
 
+  try {
+    await fs.readFile(latestFile);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      await fs.writeFile(latestFile, '');
+    }
     throw err;
   }
 }
@@ -25,28 +41,46 @@ const cli = cac('h');
 
 cli
   .command('', 'Query GPT from the terminal')
-  .option('-m, --model <model>', 'Which GPT model to use', { default: 'gpt-4' })
+  .option('-m, --model <model>', 'Which GPT model to use', {
+    default: 'gpt-3.5-turbo',
+  })
   .option('-p, --prompt [prompt]', 'The prompt to send GPT')
   .option('-c, --continue', 'Continue from the last conversation')
   .action(async options => {
     try {
-      await init();
-    } catch (err) {
-      bomb(err);
-    }
-
-    if (options.continue) {
-    }
-
-    if (!options.prompt) {
-      try {
-        options.prompt = await openEditor();
-      } catch (err) {
-        bomb(err);
+      if (!validModels.includes(options.model)) {
+        const formattedModels = validModels.map(m => `  ${m}`).join('\n');
+        throw new Error(
+          `Model '${options.model}' does not exist, choose one from:\n${formattedModels}`,
+        );
       }
-    }
 
-    console.log(await ask(options.prompt, options.model));
+      await init();
+
+      let conversation;
+      if (options.continue) {
+        const latestFile = await fs.readFile(latestFile, { encoding: 'utf-8' });
+        if (latestFile) {
+          try {
+            conversation = JSON.parse(latestFile);
+          } catch (err) {
+            throw new Error(
+              `Expected file "${latestFile}" to contain a JSON-encoded conversation with GPT.`,
+              { cause: err },
+            );
+          }
+        }
+      }
+
+      if (!options.prompt) {
+        options.prompt = await openEditor();
+      }
+
+      console.log(await ask(options.prompt, options.model, conversation));
+    } catch (err) {
+      console.error(err.message);
+      process.exit(1);
+    }
   });
 
 cli.help();
@@ -95,9 +129,4 @@ function getTempFilePath(prompt) {
     .join('-');
 
   return path.join(dataDir, `prompt_${timestamp}_${words}.txt`);
-}
-
-function bomb(err) {
-  console.error(err.message);
-  process.exit(1);
 }

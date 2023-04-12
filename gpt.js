@@ -14,7 +14,7 @@ const initialPrompt = await fs.readFile(
   { encoding: 'utf8' },
 );
 
-export default async function ask(question, model = 'gpt-4') {
+export async function ask(question, model = 'gpt-4') {
   const data = {
     model,
     stop: 'END_OF_MESSAGE',
@@ -34,13 +34,7 @@ export default async function ask(question, model = 'gpt-4') {
         )}`,
       );
     }
-    if (!msg.includes('END_OF_MESSAGE')) {
-      throw new Error(
-        `Expected message to include END_OF_MESSAGE terminator, but got this instead:\n${msg}`,
-      );
-    }
-
-    return msg.split('END_OF_MESSAGE')[0];
+    return msg;
   } catch (err) {
     if (err instanceof AxiosError) {
       const data = err.response?.data ?? {};
