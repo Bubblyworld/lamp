@@ -66,7 +66,7 @@ export async function ask(
     };
   } catch (err) {
     if (err instanceof TypeError) {
-      throw new Error(`Invalid request posted to ${apiUrl}.`, { cause: err });
+      throw new Error(`Post to ${apiUrl} failed.`, { cause: err.cause });
     }
 
     throw new Error(`Internal error posting to ${apiUrl}`, {

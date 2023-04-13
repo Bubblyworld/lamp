@@ -1,28 +1,25 @@
 {
   "name": "lamp",
-  "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
-  "exports": {
-    ".": "./index.js"
-  },
+  "version": "1.0.0",
+  "description": "Query GPT models from the safety of your terminal.",
+  "license": "MIT",
   "bin": {
-    "h": "./index.js"
-  },
-  "scripts": {
-    "build": "npm run prettier",
-    "prettier": "npx prettier -w *.js",
-    "prepublish": "npm run build",
-    "depcruise": "depcruise --output-type dot ./index.js | dot -Tsvg -o /tmp/output.svg && open -a \"Google Chrome\" /tmp/output.svg"
+    "lamp": "./index.js"
   },
   "files": [
     "index.js",
     "gpt.js",
     "prompt.md"
   ],
+  "scripts": {
+    "build": "npm run prettier",
+    "prettier": "npx prettier -w *.js",
+    "prepublish": "npm run build",
+    "depcruise": "depcruise --output-type dot ./index.js | dot -Tsvg -o /tmp/output.svg && open -a \"Google Chrome\" /tmp/output.svg"
+  },
   "dependencies": {
     "cac": "^6.7.14",
-    "ora": "^6.3.0",
     "picocolors": "^1.0.0"
   },
   "devDependencies": {
