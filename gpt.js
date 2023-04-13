@@ -1,4 +1,3 @@
-import axios, { AxiosError } from 'axios';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 
@@ -33,13 +32,23 @@ export async function ask(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     };
-    const res = await axios.post(apiUrl, data, { headers: apiHeaders });
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: apiHeaders,
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      throw new Error(
+        `Network response was not ok: (${res.status}) ${res.statusText}`,
+      );
+    }
 
-    const msg = res.data.choices[0].message.content;
+    const resData = await res.json();
+    const msg = resData.choices[0].message.content;
     if (msg === null || msg === undefined) {
       throw new Error(
         `Expected response from OpenAI, but got null message instead: ${JSON.stringify(
-          res.data.choices[0],
+          resData.choices[0],
           null,
           2,
         )}`,
@@ -56,12 +65,8 @@ export async function ask(
       conversation,
     };
   } catch (err) {
-    if (err instanceof AxiosError) {
-      const data = err.response?.data ?? {};
-      throw new Error(
-        `Invalid request posted to ${apiUrl}: ${data.error.message ?? ''}`,
-        { cause: err },
-      );
+    if (err instanceof TypeError) {
+      throw new Error(`Invalid request posted to ${apiUrl}.`, { cause: err });
     }
 
     throw new Error(`Internal error posting to ${apiUrl}`, {
