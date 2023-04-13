@@ -5,11 +5,11 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import pico from 'picocolors';
+import readline from 'readline';
 import { fileURLToPath } from 'url';
 import { ask } from './gpt.js';
-import readline from 'readline';
 
-const dataDir = path.join(os.homedir(), '.h-data');
+const dataDir = path.join(os.homedir(), '.lamp-data');
 const latestFile = path.join(dataDir, 'latest.json');
 const credsFile = path.join(dataDir, 'creds.txt');
 const defaultPrompt = 'Replace this file with your prompt.';

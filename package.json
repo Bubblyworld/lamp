@@ -12,7 +12,8 @@
   "scripts": {
     "build": "npm run prettier",
     "prettier": "npx prettier -w *.js",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "depcruise": "depcruise --output-type dot ./index.js | dot -Tsvg -o /tmp/output.svg && open -a \"Google Chrome\" /tmp/output.svg"
   },
   "files": [
     "index.js",
