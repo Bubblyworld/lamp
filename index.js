@@ -3,7 +3,7 @@ import cac from 'cac';
 import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import os from 'os';
-import path from 'path';
+import path, { basename } from 'path';
 import pico from 'picocolors';
 import readline from 'readline';
 import { fileURLToPath } from 'url';
@@ -98,8 +98,14 @@ are given. The model's response will be written to stdout.`,
   .option('-p, --prompt <prompt>', 'Pass a prompt to the GPT model')
   .option('-e, --edit', 'Edit a prompt for the GPT model')
   .option('-c, --continue', 'Continue from the last message')
+  .option('-f, --file <path>', 'Include one or more files as context')
   .action(async options => {
     try {
+      if (Array.isArray(options.prompt)) {
+        throw new Error(
+          `You may only provide a single prompt with the '-p,--prompt' flag.`,
+        );
+      }
       if (!validModels.includes(options.model)) {
         const formattedModels = validModels.map(m => `  ${m}`).join('\n');
         throw new Error(
@@ -138,11 +144,20 @@ are given. The model's response will be written to stdout.`,
         }
       }
 
+      let files = new Object(null);
+      if (options.file && typeof options.file === 'string') {
+        options.file = [options.file];
+      }
+      for (const path of options.file) {
+        files[basename(path)] = await fs.readFile(path, { encoding: 'utf-8' });
+      }
+
       const data = await ask(
         options.prompt,
         apiKey,
         options.model,
         conversation,
+        files,
       );
       console.log(data.msg.trim());
 

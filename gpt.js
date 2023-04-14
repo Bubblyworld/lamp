@@ -13,9 +13,21 @@ export async function ask(
   apiKey,
   model = 'gpt-4',
   conversation = null,
+  files = null,
 ) {
   if (!conversation) {
     conversation = [{ role: 'system', content: initialPrompt }];
+  }
+  if (files) {
+    for (const [name, content] of Object.entries(files)) {
+      conversation.push({
+        role: 'system',
+        content: `FILE NAME: ${name}
+Content starts below the line.
+----
+${content}`,
+      });
+    }
   }
   conversation.push({
     role: 'user',
