@@ -145,11 +145,16 @@ are given. The model's response will be written to stdout.`,
       }
 
       let files = new Object(null);
-      if (options.file && typeof options.file === 'string') {
-        options.file = [options.file];
-      }
-      for (const path of options.file) {
-        files[basename(path)] = await fs.readFile(path, { encoding: 'utf-8' });
+      if (options.file) {
+        if (typeof options.file === 'string') {
+          options.file = [options.file];
+        }
+
+        for (const path of options.file) {
+          files[basename(path)] = await fs.readFile(path, {
+            encoding: 'utf-8',
+          });
+        }
       }
 
       const data = await ask(
