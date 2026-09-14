@@ -2,10 +2,6 @@
 
 **La**nguage **M**odel **P**rompter.
 
-Query GPT models from the safety of your terminal. Unix-friendly for use 
-within bash pipelines. Supports continuous conversation, like the OpenAI 
-interface, but with the benefit of being able to switch model at will.
-
 ```
 lamp/1.0.0
 
